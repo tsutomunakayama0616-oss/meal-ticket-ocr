@@ -8,33 +8,81 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <meta name="theme-color" content="#1769aa">
+  <meta name="theme-color" content="#005bbb">
 
-  <title>食券OCR登録</title>
+  <title>CLOVER DINING 食券OCR</title>
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="manifest" href="./manifest.json">
 
+  <!-- iPhoneホーム画面用アイコン -->
+  <link
+    rel="apple-touch-icon"
+    href="./icon-192.png"
+  >
+
+  <!-- Tesseract.js -->
   <script
     src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
     defer
   ></script>
 
-  <script src="app.js" defer></script>
+  <script src="./app.js" defer></script>
 </head>
 
 <body>
   <main class="container">
 
-    <h1>食券OCR登録</h1>
+    <header class="app-header">
+      <img
+        class="app-logo"
+        src="./icon-192.png"
+        alt="CLOVER DINING 食券OCR"
+      >
+
+      <div>
+        <h1>CLOVER DINING</h1>
+        <p class="app-subtitle">食券OCR登録</p>
+      </div>
+    </header>
 
     <p class="description">
-      半券を1枚ずつ撮影してください。
+      半券を1枚ずつ撮影し、読み取り結果を確認して登録してください。
     </p>
 
+    <!-- 申請者情報 -->
     <section class="card">
+      <h2>申請者情報</h2>
 
-      <label for="ticketImage" class="camera-button">
+      <label for="department">所属</label>
+      <input
+        id="department"
+        type="text"
+        placeholder="例：リハビリテーション科"
+        autocomplete="organization"
+      >
+
+      <label for="employeeName">氏名</label>
+      <input
+        id="employeeName"
+        type="text"
+        placeholder="例：仲山 勉"
+        autocomplete="name"
+      >
+
+      <p class="helper-text">
+        所属と氏名は、この端末内に記憶されます。
+      </p>
+    </section>
+
+    <!-- 半券撮影 -->
+    <section class="card">
+      <h2>半券撮影</h2>
+
+      <label
+        for="ticketImage"
+        class="camera-button"
+      >
         半券を撮影する
       </label>
 
@@ -44,6 +92,10 @@
         accept="image/*"
         capture="environment"
       >
+
+      <p class="helper-text">
+        半券を縦向きにして、1枚だけ大きく写してください。
+      </p>
 
       <img
         id="preview"
@@ -59,46 +111,75 @@
         文字を読み取る
       </button>
 
-      <div id="progressArea" class="hidden">
-        <p id="progressText">読み取り準備中...</p>
-        <progress id="progressBar" value="0" max="1"></progress>
-      </div>
+      <div
+        id="progressArea"
+        class="hidden"
+      >
+        <p id="progressText">
+          読み取り準備中...
+        </p>
 
+        <progress
+          id="progressBar"
+          value="0"
+          max="1"
+        ></progress>
+      </div>
     </section>
 
+    <!-- OCR結果 -->
     <section class="card">
-
       <h2>読み取り結果</h2>
 
-      <label for="ticketDate">日付</label>
+      <label for="ticketDate">
+        日付
+      </label>
+
       <input
         id="ticketDate"
         type="text"
-        placeholder="20.10.24"
+        inputmode="numeric"
+        placeholder="26.07.24"
       >
 
-      <label for="ticketNumber">通し番号</label>
+      <label for="ticketNumber">
+        通し番号
+      </label>
+
       <input
         id="ticketNumber"
         type="number"
+        inputmode="numeric"
+        min="1"
+        max="9999"
         placeholder="413"
       >
 
-      <label for="ticketTime">購入時間</label>
-      <input
-        id="ticketTime"
-        type="time"
-      >
+      <label for="ticketTime">
+        購入時間
+      </label>
 
-      <label for="ticketPrice">価格</label>
+      <div class="date-time-wrapper">
+        <input
+          id="ticketTime"
+          type="time"
+        >
+      </div>
+
+      <label for="ticketPrice">
+        価格
+      </label>
+
       <div class="price-row">
         <input
           id="ticketPrice"
           type="number"
+          inputmode="numeric"
           min="0"
           step="10"
           placeholder="690"
         >
+
         <span>円</span>
       </div>
 
@@ -113,17 +194,27 @@
         id="saveButton"
         type="button"
       >
-        登録する
+        半券を登録する
       </button>
 
-      <p id="message" aria-live="polite"></p>
-
+      <p
+        id="message"
+        aria-live="polite"
+      ></p>
     </section>
 
-    <section class="card">
-
+    <!-- 登録履歴 -->
+    <section class="card history-card">
       <div class="history-title">
-        <h2>登録履歴</h2>
+        <div>
+          <h2>登録履歴</h2>
+          <p
+            id="historySummary"
+            class="helper-text"
+          >
+            登録件数：0件
+          </p>
+        </div>
 
         <button
           id="csvButton"
@@ -138,12 +229,15 @@
         <table>
           <thead>
             <tr>
+              <th>画像</th>
+              <th>所属</th>
+              <th>氏名</th>
               <th>日付</th>
               <th>番号</th>
               <th>時間</th>
               <th>価格</th>
               <th>還元額</th>
-              <th></th>
+              <th>操作</th>
             </tr>
           </thead>
 
@@ -151,14 +245,47 @@
           </tbody>
         </table>
       </div>
-
     </section>
 
+    <!-- OCR全文 -->
     <details class="card">
-      <summary>OCRで認識された全文</summary>
+      <summary>
+        OCRで認識された文字を確認
+      </summary>
+
       <pre id="rawText"></pre>
     </details>
 
+    <section class="notice">
+      <h2>保存について</h2>
+
+      <p>
+        半券画像と登録情報は、このスマートフォンのブラウザ内に保存されます。
+        他の端末や経理のパソコンには自動送信されません。
+      </p>
+    </section>
+
   </main>
+
+  <!-- 半券画像の拡大表示 -->
+  <div
+    id="imageModal"
+    class="ticket-image-modal hidden"
+    aria-hidden="true"
+  >
+    <button
+      id="closeImageModal"
+      type="button"
+      class="modal-close-button"
+      aria-label="画像を閉じる"
+    >
+      閉じる
+    </button>
+
+    <img
+      id="largeTicketImage"
+      alt="登録された半券画像"
+    >
+  </div>
 </body>
 </html>
