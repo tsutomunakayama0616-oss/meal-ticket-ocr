@@ -1,13 +1,16 @@
 "use strict";
 
 /*
- * キャッシュ名のバージョンを変更すると、
- * 古いファイルが削除されます。
+ * =========================================================
+ * CLOVER DINING 食券OCR
+ * Service Worker
+ * =========================================================
  */
-const CACHE_NAME =
-  "clover-dining-meal-ticket-ocr-v4";
 
-const APP_FILES = [
+const CACHE_NAME =
+  "clover-dining-meal-ticket-ocr-v5";
+
+const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
@@ -18,8 +21,11 @@ const APP_FILES = [
 ];
 
 /*
- * 基本ファイルをキャッシュ
+ * =========================================================
+ * インストール
+ * =========================================================
  */
+
 self.addEventListener(
   "install",
   (event) => {
@@ -28,7 +34,7 @@ self.addEventListener(
         .open(CACHE_NAME)
         .then((cache) => {
           return cache.addAll(
-            APP_FILES
+            APP_SHELL
           );
         })
         .then(() => {
@@ -39,8 +45,11 @@ self.addEventListener(
 );
 
 /*
- * 古いキャッシュを削除
+ * =========================================================
+ * 有効化
+ * =========================================================
  */
+
 self.addEventListener(
   "activate",
   (event) => {
@@ -50,21 +59,17 @@ self.addEventListener(
         .then((cacheNames) => {
           return Promise.all(
             cacheNames
-              .filter(
-                (cacheName) => {
-                  return (
-                    cacheName !==
-                    CACHE_NAME
-                  );
-                }
-              )
-              .map(
-                (cacheName) => {
-                  return caches.delete(
-                    cacheName
-                  );
-                }
-              )
+              .filter((cacheName) => {
+                return (
+                  cacheName !==
+                  CACHE_NAME
+                );
+              })
+              .map((cacheName) => {
+                return caches.delete(
+                  cacheName
+                );
+              })
           );
         })
         .then(() => {
@@ -75,14 +80,20 @@ self.addEventListener(
 );
 
 /*
- * GET通信を処理
+ * =========================================================
+ * 通信処理
+ * =========================================================
  */
+
 self.addEventListener(
   "fetch",
   (event) => {
     const request =
       event.request;
 
+    /*
+     * GET通信以外は処理しない
+     */
     if (
       request.method !== "GET"
     ) {
@@ -93,128 +104,166 @@ self.addEventListener(
       new URL(request.url);
 
     /*
-     * GitHub Pages内のファイルは
-     * ネットワークを優先する
+     * Tesseract.jsなど外部CDNは、
+     * ネットワーク優先で取得する
      */
     if (
-      requestUrl.origin ===
+      requestUrl.origin !==
       self.location.origin
     ) {
       event.respondWith(
-        fetch(request)
-          .then(
-            (
-              networkResponse
-            ) => {
-              if (
-                networkResponse &&
-                networkResponse.status ===
-                  200
-              ) {
-                const responseCopy =
-                  networkResponse.clone();
-
-                caches
-                  .open(CACHE_NAME)
-                  .then(
-                    (cache) => {
-                      cache.put(
-                        request,
-                        responseCopy
-                      );
-                    }
-                  );
-              }
-
-              return networkResponse;
-            }
-          )
-          .catch(
-            async () => {
-              const cachedResponse =
-                await caches.match(
-                  request
-                );
-
-              if (
-                cachedResponse
-              ) {
-                return cachedResponse;
-              }
-
-              /*
-               * ページ移動時の予備画面
-               */
-              if (
-                request.mode ===
-                "navigate"
-              ) {
-                return caches.match(
-                  "./index.html"
-                );
-              }
-
-              throw new Error(
-                "Resource unavailable"
-              );
-            }
-          )
+        networkFirst(
+          request
+        )
       );
 
       return;
     }
 
     /*
-     * Tesseract.jsなど外部ファイルは
+     * ページ遷移はネットワーク優先
+     */
+    if (
+      request.mode ===
+        "navigate"
+    ) {
+      event.respondWith(
+        networkFirst(
+          request,
+          "./index.html"
+        )
+      );
+
+      return;
+    }
+
+    /*
+     * 同一サイト内の静的ファイルは
      * キャッシュ優先
      */
     event.respondWith(
-      caches
-        .match(request)
-        .then(
-          (
-            cachedResponse
-          ) => {
-            if (
-              cachedResponse
-            ) {
-              return cachedResponse;
-            }
-
-            return fetch(request)
-              .then(
-                (
-                  networkResponse
-                ) => {
-                  if (
-                    networkResponse &&
-                    networkResponse.status ===
-                      200
-                  ) {
-                    const responseCopy =
-                      networkResponse.clone();
-
-                    caches
-                      .open(
-                        CACHE_NAME
-                      )
-                      .then(
-                        (
-                          cache
-                        ) => {
-                          cache.put(
-                            request,
-                            responseCopy
-                          );
-                        }
-                      );
-                  }
-
-                  return networkResponse;
-                }
-              );
-          }
-        )
+      cacheFirst(
+        request
+      )
     );
   }
 );
+
+/*
+ * =========================================================
+ * キャッシュ優先
+ * =========================================================
+ */
+
+async function cacheFirst(
+  request
+) {
+  const cachedResponse =
+    await caches.match(
+      request
+    );
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  try {
+    const networkResponse =
+      await fetch(request);
+
+    if (
+      networkResponse &&
+      networkResponse.ok
+    ) {
+      const cache =
+        await caches.open(
+          CACHE_NAME
+        );
+
+      cache.put(
+        request,
+        networkResponse.clone()
+      );
+    }
+
+    return networkResponse;
+  } catch (error) {
+    console.error(
+      "Cache first error:",
+      error
+    );
+
+    throw error;
+  }
+}
+
+/*
+ * =========================================================
+ * ネットワーク優先
+ * =========================================================
+ */
+
+async function networkFirst(
+  request,
+  fallbackPath = ""
+) {
+  try {
+    const networkResponse =
+      await fetch(request);
+
+    if (
+      networkResponse &&
+      networkResponse.ok
+    ) {
+      const cache =
+        await caches.open(
+          CACHE_NAME
+        );
+
+      cache.put(
+        request,
+        networkResponse.clone()
+      );
+    }
+
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse =
+      await caches.match(
+        request
+      );
+
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    if (fallbackPath) {
+      const fallbackResponse =
+        await caches.match(
+          fallbackPath
+        );
+
+      if (fallbackResponse) {
+        return fallbackResponse;
+      }
+    }
+
+    console.error(
+      "Network first error:",
+      error
+    );
+
+    return new Response(
+      "オフラインのため、ページを表示できません。",
+      {
+        status: 503,
+        statusText:
+          "Service Unavailable",
+        headers: {
+          "Content-Type":
+            "text/plain; charset=utf-8"
+        }
+      }
+    );
+  }
+}
