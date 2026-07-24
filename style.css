@@ -4,15 +4,21 @@
 
 :root {
   --primary-color: #005bbb;
-  --primary-dark: #00448c;
+  --primary-dark: #00458f;
   --secondary-color: #52606d;
+  --secondary-dark: #3f4b55;
   --success-color: #176327;
   --error-color: #a00000;
+  --danger-color: #a53b3b;
+  --danger-dark: #842d2d;
   --background-color: #f3f6f9;
   --card-color: #ffffff;
   --border-color: #d7dee5;
+  --input-border-color: #aeb8c2;
   --text-color: #222222;
   --muted-color: #5c6770;
+  --light-blue: #edf6fc;
+  --focus-color: rgba(0, 91, 187, 0.18);
 }
 
 html {
@@ -35,16 +41,34 @@ body {
     sans-serif;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 button,
-input {
+input,
+select {
   font: inherit;
+}
+
+button {
+  touch-action: manipulation;
 }
 
 .container {
   width: min(100%, 760px);
   margin: 0 auto;
-  padding: 18px 12px 60px;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    12px
+    max(60px, env(safe-area-inset-bottom));
 }
+
+/*
+ * =========================================================
+ * ヘッダー
+ * =========================================================
+ */
 
 .app-header {
   display: flex;
@@ -57,8 +81,13 @@ input {
 .app-logo {
   width: 72px;
   height: 72px;
+  flex-shrink: 0;
   border-radius: 17px;
   object-fit: cover;
+}
+
+.app-header-text {
+  min-width: 0;
 }
 
 h1 {
@@ -79,12 +108,23 @@ h2 {
   font-size: 19px;
 }
 
+h3 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+
 .description {
   margin: 0 0 20px;
   color: var(--muted-color);
   line-height: 1.6;
   text-align: center;
 }
+
+/*
+ * =========================================================
+ * 共通カード
+ * =========================================================
+ */
 
 .card {
   margin-bottom: 16px;
@@ -100,32 +140,56 @@ label {
   font-weight: 600;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 48px;
-  padding: 10px 12px;
-  border: 1px solid #aeb8c2;
+  border: 1px solid var(--input-border-color);
   border-radius: 9px;
   background: #ffffff;
   color: var(--text-color);
   font-size: 18px;
 }
 
-input:focus {
+input {
+  padding: 10px 12px;
+}
+
+select {
+  padding: 9px 10px;
+}
+
+input:focus,
+select:focus {
   border-color: var(--primary-color);
-  outline: 3px solid rgba(0, 91, 187, 0.18);
+  outline: 3px solid var(--focus-color);
 }
 
-input:disabled {
+input:disabled,
+select:disabled {
   background: #eeeeee;
+  color: #777777;
 }
 
-#ticketImage {
-  display: none;
+.helper-text {
+  margin: 8px 0 0;
+  color: var(--muted-color);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.camera-button,
-button {
+.hidden {
+  display: none !important;
+}
+
+/*
+ * =========================================================
+ * ボタン
+ * =========================================================
+ */
+
+button,
+.camera-button {
   display: block;
   width: 100%;
   min-height: 48px;
@@ -140,13 +204,9 @@ button {
   cursor: pointer;
 }
 
-.camera-button:hover,
-button:hover {
+button:hover,
+.camera-button:hover {
   background: var(--primary-dark);
-}
-
-button {
-  margin-top: 16px;
 }
 
 button:disabled {
@@ -154,43 +214,274 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button.secondary {
+.camera-button {
+  margin-top: 0;
+}
+
+.secondary-button {
+  background: var(--secondary-color);
+}
+
+.secondary-button:hover {
+  background: var(--secondary-dark);
+}
+
+.danger-outline-button {
+  border: 1px solid var(--danger-color);
+  background: #ffffff;
+  color: var(--danger-color);
+}
+
+.danger-outline-button:hover {
+  background: #fff2f2;
+}
+
+.compact-button {
   width: auto;
   min-height: 42px;
   margin: 0;
   padding: 8px 14px;
-  background: var(--secondary-color);
   font-size: 14px;
+}
+
+/*
+ * =========================================================
+ * カメラ
+ * =========================================================
+ */
+
+#ticketImage {
+  display: none;
+}
+
+.camera-area {
+  margin-bottom: 16px;
+}
+
+.camera-preview-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #111111;
+  aspect-ratio: 3 / 4;
+}
+
+#cameraVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #111111;
+  object-fit: cover;
+}
+
+.ticket-guide {
+  position: absolute;
+  inset: 8% 22%;
+  pointer-events: none;
+}
+
+.guide-corner {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-color: #ffffff;
+  border-style: solid;
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.guide-corner.top-left {
+  top: 0;
+  left: 0;
+  border-width: 4px 0 0 4px;
+  border-radius: 9px 0 0 0;
+}
+
+.guide-corner.top-right {
+  top: 0;
+  right: 0;
+  border-width: 4px 4px 0 0;
+  border-radius: 0 9px 0 0;
+}
+
+.guide-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 4px 4px;
+  border-radius: 0 0 0 9px;
+}
+
+.guide-corner.bottom-right {
+  right: 0;
+  bottom: 0;
+  border-width: 0 4px 4px 0;
+  border-radius: 0 0 9px 0;
+}
+
+.guide-message {
+  position: absolute;
+  right: 50%;
+  bottom: 14px;
+  width: max-content;
+  max-width: 190px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  font-size: 13px;
+  text-align: center;
+  transform: translateX(50%);
+}
+
+.capture-countdown {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+  font-size: 76px;
+  font-weight: 700;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.capture-flash {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.capture-flash.flash-active {
+  animation: capture-flash-animation 260ms ease-out;
+}
+
+@keyframes capture-flash-animation {
+  0% {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 0.95;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.camera-status {
+  min-height: 25px;
+  margin-top: 10px;
+  color: var(--muted-color);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.camera-status.ready {
+  color: var(--success-color);
+}
+
+.camera-status.warning {
+  color: #8a5c00;
+}
+
+.camera-status.error {
+  color: var(--error-color);
+}
+
+.camera-option-row {
+  margin-top: 14px;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-check-input {
+  width: 22px;
+  min-height: 22px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.form-check-label {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.camera-button-grid,
+.captured-image-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.camera-button-grid button,
+.captured-image-actions button {
+  margin: 0;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--muted-color);
+  font-size: 14px;
+}
+
+.separator::before,
+.separator::after {
+  height: 1px;
+  flex: 1;
+  background: var(--border-color);
+  content: "";
+}
+
+.captured-image-area {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
 }
 
 .preview {
   display: block;
   max-width: 100%;
   max-height: 520px;
-  margin: 16px auto;
+  margin: 0 auto;
   border: 1px solid #cccccc;
   border-radius: 9px;
   background: #f8f8f8;
   object-fit: contain;
 }
 
-.hidden {
-  display: none !important;
-}
+/*
+ * =========================================================
+ * OCR進捗
+ * =========================================================
+ */
 
-.helper-text {
-  margin: 8px 0 0;
-  color: var(--muted-color);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-#progressArea {
+.progress-area {
   margin-top: 16px;
 }
 
 #progressText {
   margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 progress {
@@ -198,18 +489,71 @@ progress {
   height: 20px;
 }
 
+/*
+ * =========================================================
+ * 日付プルダウン
+ * =========================================================
+ */
+
+.date-select-fieldset {
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.date-select-fieldset legend {
+  margin-bottom: 7px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.date-select-row {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 8px;
+}
+
+.date-select-label {
+  display: block;
+  margin: 0;
+}
+
+.date-select-label span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted-color);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.date-select-label select {
+  font-size: 16px;
+}
+
+.selected-date-display {
+  margin: 9px 0 0;
+  color: var(--muted-color);
+  font-size: 14px;
+}
+
+/*
+ * =========================================================
+ * 時刻・価格・還元額
+ * =========================================================
+ */
+
 .date-time-wrapper {
   width: 100%;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid #aeb8c2;
+  border: 1px solid var(--input-border-color);
   border-radius: 9px;
   background: #ffffff;
 }
 
 .date-time-wrapper:focus-within {
   border-color: var(--primary-color);
-  outline: 3px solid rgba(0, 91, 187, 0.18);
+  outline: 3px solid var(--focus-color);
 }
 
 .date-time-wrapper input {
@@ -242,10 +586,14 @@ progress {
 .result-box {
   margin-top: 18px;
   padding: 16px;
-  background: #edf6fc;
   border-radius: 9px;
+  background: var(--light-blue);
   font-size: 18px;
   text-align: center;
+}
+
+#saveButton {
+  margin-top: 16px;
 }
 
 #message {
@@ -255,6 +603,12 @@ progress {
   line-height: 1.5;
   text-align: center;
 }
+
+/*
+ * =========================================================
+ * 登録履歴
+ * =========================================================
+ */
 
 .history-title {
   display: flex;
@@ -271,6 +625,7 @@ progress {
   width: 100%;
   margin-top: 14px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -299,28 +654,12 @@ th {
   min-height: 36px;
   margin: 0;
   padding: 7px 11px;
-  background: #a53b3b;
+  background: var(--danger-color);
   font-size: 13px;
 }
 
 .delete-button:hover {
-  background: #842d2d;
-}
-
-.ticket-thumbnail {
-  display: block;
-  width: 54px;
-  height: 72px;
-  margin: 0 auto;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  background: #ffffff;
-  object-fit: cover;
-  cursor: pointer;
-}
-
-.ticket-thumbnail:focus {
-  outline: 3px solid rgba(0, 91, 187, 0.3);
+  background: var(--danger-dark);
 }
 
 .ticket-image-button {
@@ -337,6 +676,27 @@ th {
   background: transparent;
 }
 
+.ticket-thumbnail {
+  display: block;
+  width: 54px;
+  height: 72px;
+  margin: 0 auto;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  background: #ffffff;
+  object-fit: cover;
+}
+
+.ticket-image-button:focus {
+  outline: 3px solid var(--focus-color);
+}
+
+/*
+ * =========================================================
+ * 画像拡大表示
+ * =========================================================
+ */
+
 .ticket-image-modal {
   position: fixed;
   z-index: 1000;
@@ -344,14 +704,17 @@ th {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 66px 18px 18px;
+  padding:
+    max(66px, env(safe-area-inset-top))
+    18px
+    max(18px, env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.86);
 }
 
 .ticket-image-modal img {
   display: block;
   max-width: 96%;
-  max-height: 88vh;
+  max-height: 86vh;
   border-radius: 8px;
   background: #ffffff;
   object-fit: contain;
@@ -359,7 +722,7 @@ th {
 
 .modal-close-button {
   position: absolute;
-  top: 14px;
+  top: max(14px, env(safe-area-inset-top));
   right: 14px;
   width: auto;
   min-width: 70px;
@@ -373,6 +736,12 @@ th {
 .modal-close-button:hover {
   background: #eeeeee;
 }
+
+/*
+ * =========================================================
+ * OCR全文・注意事項
+ * =========================================================
+ */
 
 summary {
   cursor: pointer;
@@ -398,7 +767,7 @@ pre {
   padding: 16px;
   border: 1px solid #c7d9e8;
   border-radius: 12px;
-  background: #edf6fc;
+  background: var(--light-blue);
 }
 
 .notice h2 {
@@ -410,6 +779,12 @@ pre {
   margin: 0;
   line-height: 1.7;
 }
+
+/*
+ * =========================================================
+ * スマートフォン調整
+ * =========================================================
+ */
 
 @media (max-width: 520px) {
   .container {
@@ -439,7 +814,42 @@ pre {
     align-items: flex-start;
   }
 
-  button.secondary {
+  .compact-button {
     flex-shrink: 0;
+  }
+
+  .ticket-guide {
+    inset: 7% 20%;
+  }
+}
+
+@media (max-width: 420px) {
+  .date-select-row {
+    grid-template-columns: 1fr;
+  }
+
+  .camera-button-grid,
+  .captured-image-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header {
+    justify-content: flex-start;
+  }
+
+  .guide-message {
+    max-width: 160px;
+    font-size: 12px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .camera-preview-wrapper {
+    max-height: 72vh;
+    aspect-ratio: 4 / 3;
+  }
+
+  .ticket-guide {
+    inset: 6% 31%;
   }
 }
