@@ -1,23 +1,23 @@
 {
   "name": "CLOVER DINING 食券OCR",
   "short_name": "食券OCR",
-  "description": "CLOVER DINING 食券OCRアプリ",
+  "description": "CLOVER DININGの食券を撮影し、日付・番号・時間・価格を読み取って登録するアプリです。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#005BBB",
-  "theme_color": "#005BBB",
+  "background_color": "#f3f6f9",
+  "theme_color": "#005bbb",
   "lang": "ja",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
