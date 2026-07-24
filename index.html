@@ -5,34 +5,62 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
-  <meta name="theme-color" content="#005bbb">
+  <meta
+    name="theme-color"
+    content="#005bbb"
+  >
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="食券OCR"
+  >
 
   <title>CLOVER DINING 食券OCR</title>
 
-  <link rel="stylesheet" href="./style.css">
-  <link rel="manifest" href="./manifest.json">
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  >
 
-  <!-- iPhoneホーム画面用アイコン -->
+  <link
+    rel="manifest"
+    href="./manifest.json"
+  >
+
   <link
     rel="apple-touch-icon"
     href="./icon-192.png"
   >
 
-  <!-- Tesseract.js -->
+  <!-- OCRライブラリ -->
   <script
     src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
     defer
   ></script>
 
-  <script src="./app.js" defer></script>
+  <script
+    src="./app.js"
+    defer
+  ></script>
 </head>
 
 <body>
   <main class="container">
 
+    <!-- アプリヘッダー -->
     <header class="app-header">
       <img
         class="app-logo"
@@ -40,21 +68,27 @@
         alt="CLOVER DINING 食券OCR"
       >
 
-      <div>
+      <div class="app-header-text">
         <h1>CLOVER DINING</h1>
-        <p class="app-subtitle">食券OCR登録</p>
+
+        <p class="app-subtitle">
+          食券OCR登録
+        </p>
       </div>
     </header>
 
     <p class="description">
-      半券を1枚ずつ撮影し、読み取り結果を確認して登録してください。
+      半券をガイド枠内に合わせると、自動的に撮影して文字を読み取ります。
     </p>
 
     <!-- 申請者情報 -->
     <section class="card">
       <h2>申請者情報</h2>
 
-      <label for="department">所属</label>
+      <label for="department">
+        所属
+      </label>
+
       <input
         id="department"
         type="text"
@@ -62,7 +96,10 @@
         autocomplete="organization"
       >
 
-      <label for="employeeName">氏名</label>
+      <label for="employeeName">
+        氏名
+      </label>
+
       <input
         id="employeeName"
         type="text"
@@ -75,15 +112,114 @@
       </p>
     </section>
 
-    <!-- 半券撮影 -->
+    <!-- カメラ撮影 -->
     <section class="card">
       <h2>半券撮影</h2>
 
+      <div
+        id="cameraArea"
+        class="camera-area hidden"
+      >
+        <div class="camera-preview-wrapper">
+          <video
+            id="cameraVideo"
+            autoplay
+            muted
+            playsinline
+          ></video>
+
+          <!-- 半券ガイド枠 -->
+          <div
+            id="ticketGuide"
+            class="ticket-guide"
+            aria-hidden="true"
+          >
+            <span class="guide-corner top-left"></span>
+            <span class="guide-corner top-right"></span>
+            <span class="guide-corner bottom-left"></span>
+            <span class="guide-corner bottom-right"></span>
+
+            <div class="guide-message">
+              半券を枠内に合わせてください
+            </div>
+          </div>
+
+          <!-- 自動撮影カウントダウン -->
+          <div
+            id="captureCountdown"
+            class="capture-countdown hidden"
+            aria-live="polite"
+          >
+          </div>
+
+          <!-- 撮影時のフラッシュ表示 -->
+          <div
+            id="captureFlash"
+            class="capture-flash hidden"
+            aria-hidden="true"
+          ></div>
+        </div>
+
+        <div
+          id="cameraStatus"
+          class="camera-status"
+          aria-live="polite"
+        >
+          カメラを準備しています。
+        </div>
+
+        <div class="camera-option-row">
+          <label class="form-check form-switch">
+            <input
+              id="autoCaptureEnabled"
+              class="form-check-input"
+              type="checkbox"
+              checked
+            >
+
+            <span class="form-check-label">
+              半券が安定したら自動撮影
+            </span>
+          </label>
+        </div>
+
+        <div class="camera-button-grid">
+          <button
+            id="manualCaptureButton"
+            type="button"
+            class="secondary-button"
+          >
+            手動で撮影
+          </button>
+
+          <button
+            id="stopCameraButton"
+            type="button"
+            class="danger-outline-button"
+          >
+            カメラを終了
+          </button>
+        </div>
+      </div>
+
+      <!-- カメラ開始ボタン -->
+      <button
+        id="startCameraButton"
+        type="button"
+      >
+        カメラを開始する
+      </button>
+
+      <div class="separator">
+        <span>または</span>
+      </div>
+
+      <!-- 標準カメラ・既存写真 -->
       <label
         for="ticketImage"
         class="camera-button"
       >
-        半券を撮影する
+        写真を撮影・選択する
       </label>
 
       <input
@@ -94,26 +230,44 @@
       >
 
       <p class="helper-text">
-        半券を縦向きにして、1枚だけ大きく写してください。
+        自動撮影が利用できない場合は、こちらから写真を選択してください。
       </p>
 
-      <img
-        id="preview"
-        class="preview hidden"
-        alt="撮影した半券"
+      <!-- 撮影結果 -->
+      <div
+        id="capturedImageArea"
+        class="captured-image-area hidden"
       >
+        <h3>撮影した半券</h3>
 
-      <button
-        id="ocrButton"
-        type="button"
-        disabled
-      >
-        文字を読み取る
-      </button>
+        <img
+          id="preview"
+          class="preview"
+          alt="撮影した半券"
+        >
 
+        <div class="captured-image-actions">
+          <button
+            id="retakeButton"
+            type="button"
+            class="secondary-button"
+          >
+            撮り直す
+          </button>
+
+          <button
+            id="ocrButton"
+            type="button"
+          >
+            文字を読み取る
+          </button>
+        </div>
+      </div>
+
+      <!-- OCR進捗 -->
       <div
         id="progressArea"
-        class="hidden"
+        class="progress-area hidden"
       >
         <p id="progressText">
           読み取り準備中...
@@ -125,22 +279,83 @@
           max="1"
         ></progress>
       </div>
+
+      <!-- カメラ画像取得用 -->
+      <canvas
+        id="captureCanvas"
+        class="hidden"
+      ></canvas>
     </section>
 
-    <!-- OCR結果 -->
+    <!-- 読み取り結果 -->
     <section class="card">
       <h2>読み取り結果</h2>
 
-      <label for="ticketDate">
-        日付
-      </label>
+      <!-- 日付プルダウン -->
+      <fieldset class="date-select-fieldset">
+        <legend>購入日</legend>
 
-      <input
-        id="ticketDate"
-        type="text"
-        inputmode="numeric"
-        placeholder="26.07.24"
-      >
+        <div class="date-select-row">
+          <label class="date-select-label">
+            <span>年</span>
+
+            <select
+              id="ticketYear"
+              aria-label="購入年"
+            >
+              <option value="">
+                年を選択
+              </option>
+            </select>
+          </label>
+
+          <label class="date-select-label">
+            <span>月</span>
+
+            <select
+              id="ticketMonth"
+              aria-label="購入月"
+            >
+              <option value="">
+                月を選択
+              </option>
+
+              <option value="01">1月</option>
+              <option value="02">2月</option>
+              <option value="03">3月</option>
+              <option value="04">4月</option>
+              <option value="05">5月</option>
+              <option value="06">6月</option>
+              <option value="07">7月</option>
+              <option value="08">8月</option>
+              <option value="09">9月</option>
+              <option value="10">10月</option>
+              <option value="11">11月</option>
+              <option value="12">12月</option>
+            </select>
+          </label>
+
+          <label class="date-select-label">
+            <span>日</span>
+
+            <select
+              id="ticketDay"
+              aria-label="購入日"
+            >
+              <option value="">
+                日を選択
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <p
+          id="selectedDateDisplay"
+          class="selected-date-display"
+        >
+          選択日：未選択
+        </p>
+      </fieldset>
 
       <label for="ticketNumber">
         通し番号
@@ -152,7 +367,7 @@
         inputmode="numeric"
         min="1"
         max="9999"
-        placeholder="413"
+        placeholder="例：413"
       >
 
       <label for="ticketTime">
@@ -176,8 +391,9 @@
           type="number"
           inputmode="numeric"
           min="0"
+          max="3000"
           step="10"
-          placeholder="690"
+          placeholder="例：690"
         >
 
         <span>円</span>
@@ -186,7 +402,10 @@
       <div class="result-box">
         還元予定額：
         <strong>
-          <span id="refundAmount">0</span>円
+          <span id="refundAmount">
+            0
+          </span>
+          円
         </strong>
       </div>
 
@@ -208,18 +427,19 @@
       <div class="history-title">
         <div>
           <h2>登録履歴</h2>
+
           <p
             id="historySummary"
             class="helper-text"
           >
-            登録件数：0件
+            登録件数：0件／還元予定合計：0円
           </p>
         </div>
 
         <button
           id="csvButton"
           type="button"
-          class="secondary"
+          class="secondary-button compact-button"
         >
           CSV出力
         </button>
@@ -247,7 +467,7 @@
       </div>
     </section>
 
-    <!-- OCR全文 -->
+    <!-- OCR全文確認 -->
     <details class="card">
       <summary>
         OCRで認識された文字を確認
@@ -256,18 +476,18 @@
       <pre id="rawText"></pre>
     </details>
 
+    <!-- 保存上の注意 -->
     <section class="notice">
-      <h2>保存について</h2>
+      <h2>データの保存について</h2>
 
       <p>
         半券画像と登録情報は、このスマートフォンのブラウザ内に保存されます。
         他の端末や経理のパソコンには自動送信されません。
       </p>
     </section>
-
   </main>
 
-  <!-- 半券画像の拡大表示 -->
+  <!-- 登録画像の拡大表示 -->
   <div
     id="imageModal"
     class="ticket-image-modal hidden"
