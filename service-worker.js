@@ -1,11 +1,11 @@
 "use strict";
 
 /*
- * バージョンを変更することで、
- * 古いapp.jsなどのキャッシュを削除する
+ * キャッシュ名のバージョンを変更すると、
+ * 古いファイルが削除されます。
  */
 const CACHE_NAME =
-  "clover-dining-meal-ticket-ocr-v3";
+  "clover-dining-meal-ticket-ocr-v4";
 
 const APP_FILES = [
   "./",
@@ -18,7 +18,7 @@ const APP_FILES = [
 ];
 
 /*
- * アプリファイルをキャッシュ
+ * 基本ファイルをキャッシュ
  */
 self.addEventListener(
   "install",
@@ -27,7 +27,9 @@ self.addEventListener(
       caches
         .open(CACHE_NAME)
         .then((cache) => {
-          return cache.addAll(APP_FILES);
+          return cache.addAll(
+            APP_FILES
+          );
         })
         .then(() => {
           return self.skipWaiting();
@@ -48,16 +50,21 @@ self.addEventListener(
         .then((cacheNames) => {
           return Promise.all(
             cacheNames
-              .filter((cacheName) => {
-                return (
-                  cacheName !== CACHE_NAME
-                );
-              })
-              .map((cacheName) => {
-                return caches.delete(
-                  cacheName
-                );
-              })
+              .filter(
+                (cacheName) => {
+                  return (
+                    cacheName !==
+                    CACHE_NAME
+                  );
+                }
+              )
+              .map(
+                (cacheName) => {
+                  return caches.delete(
+                    cacheName
+                  );
+                }
+              )
           );
         })
         .then(() => {
@@ -68,76 +75,146 @@ self.addEventListener(
 );
 
 /*
- * 通信を優先し、
- * 通信できない場合はキャッシュを使用
+ * GET通信を処理
  */
 self.addEventListener(
   "fetch",
   (event) => {
-    const request = event.request;
+    const request =
+      event.request;
 
-    /*
-     * GET以外は処理しない
-     */
-    if (request.method !== "GET") {
+    if (
+      request.method !== "GET"
+    ) {
       return;
     }
 
+    const requestUrl =
+      new URL(request.url);
+
     /*
      * GitHub Pages内のファイルは
-     * ネットワーク優先で更新を取得
+     * ネットワークを優先する
      */
     if (
-      request.url.startsWith(
-        self.location.origin
-      )
+      requestUrl.origin ===
+      self.location.origin
     ) {
       event.respondWith(
         fetch(request)
-          .then((networkResponse) => {
-            /*
-             * 正常な応答をキャッシュへ保存
-             */
-            if (
-              networkResponse &&
-              networkResponse.status === 200
-            ) {
-              const responseCopy =
-                networkResponse.clone();
+          .then(
+            (
+              networkResponse
+            ) => {
+              if (
+                networkResponse &&
+                networkResponse.status ===
+                  200
+              ) {
+                const responseCopy =
+                  networkResponse.clone();
 
-              caches
-                .open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(
-                    request,
-                    responseCopy
+                caches
+                  .open(CACHE_NAME)
+                  .then(
+                    (cache) => {
+                      cache.put(
+                        request,
+                        responseCopy
+                      );
+                    }
                   );
-                });
-            }
+              }
 
-            return networkResponse;
-          })
-          .catch(() => {
-            return caches.match(request);
-          })
+              return networkResponse;
+            }
+          )
+          .catch(
+            async () => {
+              const cachedResponse =
+                await caches.match(
+                  request
+                );
+
+              if (
+                cachedResponse
+              ) {
+                return cachedResponse;
+              }
+
+              /*
+               * ページ移動時の予備画面
+               */
+              if (
+                request.mode ===
+                "navigate"
+              ) {
+                return caches.match(
+                  "./index.html"
+                );
+              }
+
+              throw new Error(
+                "Resource unavailable"
+              );
+            }
+          )
       );
 
       return;
     }
 
     /*
-     * 外部ファイルはキャッシュ優先
+     * Tesseract.jsなど外部ファイルは
+     * キャッシュ優先
      */
     event.respondWith(
       caches
         .match(request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
+        .then(
+          (
+            cachedResponse
+          ) => {
+            if (
+              cachedResponse
+            ) {
+              return cachedResponse;
+            }
 
-          return fetch(request);
-        })
+            return fetch(request)
+              .then(
+                (
+                  networkResponse
+                ) => {
+                  if (
+                    networkResponse &&
+                    networkResponse.status ===
+                      200
+                  ) {
+                    const responseCopy =
+                      networkResponse.clone();
+
+                    caches
+                      .open(
+                        CACHE_NAME
+                      )
+                      .then(
+                        (
+                          cache
+                        ) => {
+                          cache.put(
+                            request,
+                            responseCopy
+                          );
+                        }
+                      );
+                  }
+
+                  return networkResponse;
+                }
+              );
+          }
+        )
     );
   }
 );
